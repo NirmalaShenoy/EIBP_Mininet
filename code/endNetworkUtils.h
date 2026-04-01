@@ -21,7 +21,7 @@ struct addr_tuple {
 	char tier_addr[MAX_TIER_ADDR_SIZE]; //Labels
 	struct in_addr ip_addr; //IP Addresses associated with that label 
 	uint8_t cidr;
-	char etherPortName[10]; 
+	char etherPortName[IFNAMSIZ];
 	struct addr_tuple *next;
 };
 extern struct addr_tuple *headTuple;

@@ -32,10 +32,10 @@
 //extern int ctrlSend(char eth[], char pay[]); //defined in sendMPLRCtrl.c
 extern int ctrlLabelSend(int, char eth[], char pay[]);//defined in send_MNLRAutoLabelCtrlMessages.c
 extern int dataSend(char etherPort[], unsigned char ipPacket[], char destTier[],char srcTier[], int ipPacketSize); // defined in send_MPLRData.c
-extern int endNetworkSend(char*, uint8_t*, int); //defined in send_MPLREndNW.c
-extern int dataFwd(char etherPort[20], unsigned char MPLRPacket[], int MPLRPacketSize); // defined in fwd_MPLRData.c
-extern int dataDecapsulation(char etherPort[20], unsigned char MPLRDecapsPacket[], int MPLRDecapsSize); // defined in fwd_MPLRDecapsulation.c 
-//extern int dataDecapsulationUDP(char etherPort[20], unsigned char MPLRDecapsPacket[], int MPLRDecapsSize); // Not used defined in fwd_MPLRDecapsulation.c 
+extern int endNetworkSend(char[], uint8_t*, int); //defined in send_MPLREndNW.c
+extern int dataFwd(char etherport[IFNAMSIZ], unsigned char MPLRPacket[], int MPLRPacketSize); // defined in fwd_MPLRData.c
+extern int dataDecapsulation(char etherport[IFNAMSIZ], unsigned char MPLRDecapsPacket[], int MPLRDecapsSize); // defined in fwd_MPLRDecapsulation.c 
+//extern int dataDecapsulationUDP(char etherport[IFNAMSIZ], unsigned char MPLRDecapsPacket[], int MPLRDecapsSize); // Not used defined in fwd_MPLRDecapsulation.c 
 extern int packetForwardAlgorithm(char currentTier[], char desTier[]); //defined in fwdAlgorithm.c
 extern int isFWDFieldsSet(); // defined in fwdAlgorithm.c
 
@@ -89,7 +89,7 @@ extern struct addr_tuple* tablehead; // NS to understand the difference between 
 char* tierAddr[20]; //this character array stores the tier address of format 1.2.3.4 etc
 char* ipAddress[16]; //this character array store the ip address of ip node
 int cidrs[100] = { 0 }; //subnet mask eg: 24
-char* portName[10]; // stores as a char array example ethx
+char* portName[IFNAMSIZ]; // stores as a char array example ethx
 struct in_addr ips[100]; // ?? 
 char ip_add[20];  // storing IP addresses 
 
@@ -142,19 +142,19 @@ void joinChildTierParentUIDInterface(char childLabel[], char myTierAddress[], ch
 void printMyLabels();
 
 // handling different message types 
-void hello_msg(char[2048], unsigned char*, char*, struct sockaddr_ll); 
-void encaps_ip_msg(char[2048], unsigned char*, char*, struct sockaddr_ll, int*);
-void ip_tier_mapping_msg(char[2048], unsigned char*, char*, struct sockaddr_ll);
-void msg_typ_join(char[2048], unsigned char*, char*, struct sockaddr_ll);
-void msg_typ_labl_available(char[2048], unsigned char*, char*, struct sockaddr_ll);
-void msg_typ_labl_accptd(char[2048], unsigned char*, char*, struct sockaddr_ll);
-void msg_typ_labl_add(char[2048], unsigned char*, char*, struct sockaddr_ll);
-void msg_typ_labl_delt(char[2048], unsigned char*, char*, struct sockaddr_ll);
-void msg_typ_rqst_ip(char[2048], unsigned char*, char*, struct sockaddr_ll);
-void msg_typ_ip_res(char[2048], unsigned char*, char*, struct sockaddr_ll, int*);
-void msg_typ_labl_lst(char[2048], unsigned char*, char*, struct sockaddr_ll);
-void msg_typ_ip_delt(char[2048], unsigned char*, char*, struct sockaddr_ll);
-void msg_typ_ip_add(char[2048], unsigned char*, char*, struct sockaddr_ll, int*);
+void hello_msg(char[2048], unsigned char*, char[8], struct sockaddr_ll); 
+void encaps_ip_msg(char[2048], unsigned char*, char[8], struct sockaddr_ll, int*);
+void ip_tier_mapping_msg(char[2048], unsigned char*, char[8], struct sockaddr_ll);
+void msg_typ_join(char[2048], unsigned char*, char[8], struct sockaddr_ll);
+void msg_typ_labl_available(char[2048], unsigned char*, char[8], struct sockaddr_ll);
+void msg_typ_labl_accptd(char[2048], unsigned char*, char[8], struct sockaddr_ll);
+void msg_typ_labl_add(char[2048], unsigned char*, char[8], struct sockaddr_ll);
+void msg_typ_labl_delt(char[2048], unsigned char*, char[8], struct sockaddr_ll);
+void msg_typ_rqst_ip(char[2048], unsigned char*, char[8], struct sockaddr_ll);
+void msg_typ_ip_res(char[2048], unsigned char*, char[8], struct sockaddr_ll, int*);
+void msg_typ_labl_lst(char[2048], unsigned char*, char[8], struct sockaddr_ll);
+void msg_typ_ip_delt(char[2048], unsigned char*, char[8], struct sockaddr_ll);
+void msg_typ_ip_add(char[2048], unsigned char*, char[8], struct sockaddr_ll, int*);
 
 extern int myTotalTierAddress;
 
@@ -227,12 +227,11 @@ int _get_MACTest(struct addr_tuple* myAddr) {
 	unsigned char* ethhead = NULL;
 	unsigned char tempIP[1500];
 	struct ether_addr ether;
-	
-	// calloc(number_of_objects, sizeof_objects)
-	char* recvOnEtherPort = calloc(25, sizeof(char));
-	char* recvOnEtherPortIP = calloc(25, sizeof(char));
+
+	char recvOnEtherPort[IFNAMSIZ] = {0};
+	char recvOnEtherPortIP[IFNAMSIZ] = {0};
 	// char MACString[18];
-	
+
 	struct sockaddr_ll src_addr;
 	struct sockaddr_ll src_addrIP;
 
@@ -1080,7 +1079,7 @@ void checkEntriesToUpdate() {
  * //Send NULL Join Request //called in helloList.h
  * Null join will be sent by tier 2 and tier 3 nodes 
  ***********************************************/
-void sendNullJoin(int to_port[20]) {
+void sendNullJoin(int to_port[IFNAMSIZ]) {
 	char labelAssignmentPayLoad[200];
 	setInterfaces();
 	int cplength = 0;
@@ -1249,7 +1248,8 @@ void getMyTierAddresses(char* tierAddr[])
 	char buffer[2048];
 	unsigned char* ethhead = NULL;
 	int n;
-	char* recvOnEtherPort = calloc(25, sizeof(char));
+	char recvOnEtherPort[IFNAMSIZ] = {0};
+
 	if ((sock = socket(AF_PACKET, SOCK_RAW, htons(0x8850))) < 0) {  // Creating the EIBP CONTROL SOCKET HERE
 		printf("\nERROR: EIBP Socket ");
 	}
@@ -1308,9 +1308,9 @@ void getMyTierAddresses(char* tierAddr[])
 						int labelLength = ethhead[messagePointer];
 						//printf("\n Label Length = %d\n", labelLength);
 						messagePointer++;
-						char label[10];
+						char label[10] = {0};
 						memcpy(label, ethhead + messagePointer, labelLength);
-						//printf("\nLabel  = %s  Label length= %d\n", label, (int)strlen(label));
+						printf("\nLabel  = %s  Label length= %d\n", label, (int)strlen(label));
 						printf("\nLabel  = %s \n", label);
 						messagePointer = messagePointer + labelLength;
 						if (!recvdLabel) {
@@ -1401,7 +1401,7 @@ void addLabelsList(struct labels* labelList, char label[]) {
  * 
  * 
 *****************************************************************/
-void notify_lostmychild(char port[20]) {
+void notify_lostmychild(char port[IFNAMSIZ]) {
 	if (myTierValue == 2) {
 		//printf("\nI am at tier 2 and lost my child\n");
 		struct labels* lostlabelList;
@@ -1828,17 +1828,16 @@ void joinChildTierParentUIDInterface(char childLabel[], char myTierAddress[], ch
 	//printf("\n After appending the uid of the parent, childLabel = %s ", childLabel);
 	char temp[10] = ".";
 
-	char *etherPortCopy = calloc(25, sizeof(char));
+	char etherPortCopy[IFNAMSIZ] = {0};
 	strcpy(etherPortCopy, myEtherPort);
 	char *result = strtok(etherPortCopy, "-");
 	result = strtok(NULL, "-");
 	strcpy(temp + 1, result + 3);
-//	free(etherPortCopy);
 
-	// printf("\n temp = %s", temp);
+	printf("\n temp = %s", temp);
 	curLengthChildLabel = strlen(childLabel);
 	strcpy(childLabel + curLengthChildLabel, temp);
-	//printf("\n After appending the port ID, ChildLabel = %s", childLabel);
+	printf("\n After appending the port ID, ChildLabel = %s", childLabel);
 }
 
 /****************************************************************************
@@ -1916,7 +1915,7 @@ void add_LL(char label[10]) {
 //MESSAGE TYPES
 // Receiving message types 
 //===========================================
-void hello_msg(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr) {
+void hello_msg(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr) {
 	// MPLRCtrlReceivedCount++;
 	//MPLROtherReceivedCount--;
 	int tierAddrTotal = (ethhead[15]);
@@ -1955,7 +1954,7 @@ void hello_msg(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort,
  * 
  * 
  ************************************************************************/
-void encaps_ip_msg(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr, int *n) {
+void encaps_ip_msg(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr, int *n) {
 	printf("\nReceived Message Type is MESSAGE_TYPE_DATA\n");
 	//MPLRDataReceivedCount++;
 	//MPLROtherReceivedCount--;
@@ -2069,7 +2068,7 @@ void encaps_ip_msg(char buffer[2048], unsigned char* ethhead, char* recvOnEtherP
  * 
  * 
  **************************************************************************/
-void ip_tier_mapping_msg(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr) {
+void ip_tier_mapping_msg(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr) {
 	printf("\nReceived Message Type is MESSAGE_TYPE_ENDNW on : %s", recvOnEtherPort);
 	//MPLRMsgVReceivedCount++;
 	//MPLROtherReceivedCount--;
@@ -2215,7 +2214,7 @@ void ip_tier_mapping_msg(char buffer[2048], unsigned char* ethhead, char* recvOn
 	else   generate the label based on the interface it recived the message from
 	Send the label to the node  
 ***********************************************************************************/
-void msg_typ_join(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr) {
+void msg_typ_join(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr) {
 	printf("\n\n********************%s**********************", __FUNCTION__);
 	printf("\nReceived MESSAGE_TYPE_JOIN from : %s", recvOnEtherPort);
 	//MPLRMsgVReceivedCount++;
@@ -2266,7 +2265,7 @@ void msg_typ_join(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPo
  * Tejas 
  * 
 ****************************************************************************/
-void msg_typ_labl_available(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr) {
+void msg_typ_labl_available(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr) {
 	printf("\n\n********************%s**********************", __FUNCTION__);
 	//printf("\n\nReceived MESSAGE_TYPE_LABELS_AVAILABLE");
 	//MPLRMsgVReceivedCount++;
@@ -2362,7 +2361,7 @@ void msg_typ_labl_available(char buffer[2048], unsigned char* ethhead, char* rec
  * Tejas
  *   NS ?? - no action just a print out   
 *******************************************************************************/
-void msg_typ_labl_accptd(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr) {
+void msg_typ_labl_accptd(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr) {
 	int stablePort = 0;
 	stablePort = staging(recvOnEtherPort);
 	printf("\nReceived MESSAGE_TYPE_LABELS_ACCEPTED \n");
@@ -2375,7 +2374,7 @@ void msg_typ_labl_accptd(char buffer[2048], unsigned char* ethhead, char* recvOn
  * 
  * 
 ********************************************************************************/
-void msg_typ_labl_add(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr) {
+void msg_typ_labl_add(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr) {
 	printf("\nReceived MESSAGE_TYPE_MY_LABELS_ADD on : %s \n", recvOnEtherPort);
 	//MPLRMsgVReceivedCount++;
 	//MPLROtherReceivedCount--;
@@ -2412,7 +2411,7 @@ void msg_typ_labl_add(char buffer[2048], unsigned char* ethhead, char* recvOnEth
  * 
  *    
 **************************************************************************************/
-void msg_typ_labl_delt(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr) {
+void msg_typ_labl_delt(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr) {
 	gettimeofday(&down_time, NULL);
 	d_time = ((double)down_time.tv_sec*1000000 + (double)down_time.tv_usec) / 1000000;
 	//printf("\nCURRENT_TIME:%lf\t", conv_time); 
@@ -2472,7 +2471,7 @@ void msg_typ_labl_delt(char buffer[2048], unsigned char* ethhead, char* recvOnEt
  * 
  * 
 ***************************************************************************************/
-void msg_typ_rqst_ip(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr) {
+void msg_typ_rqst_ip(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr) {
 	uint8_t totalEntries = 0;
 	printf("\nReceived Message Type is MESSAGE_TYPE_REQUEST_IP_RESOLVE : %s \n", recvOnEtherPort);
 	//MPLRMsgVReceivedCount++;
@@ -2525,7 +2524,7 @@ void msg_typ_rqst_ip(char buffer[2048], unsigned char* ethhead, char* recvOnEthe
  * 
  * 
 ***************************************************************************/
-void msg_typ_ip_res(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr, int *n) {
+void msg_typ_ip_res(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr, int *n) {
 	printf("\nReceived Message Type is MESSAGE_TYPE_RESPONSE_IP_RESOLVE: %s \n", recvOnEtherPort);
 	//MPLRMsgVReceivedCount++;
 	//MPLROtherReceivedCount--;
@@ -2640,7 +2639,7 @@ void msg_typ_ip_res(char buffer[2048], unsigned char* ethhead, char* recvOnEther
  * 
  * 
  **************************************************************************************/
-void msg_typ_labl_lst(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr) {
+void msg_typ_labl_lst(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr) {
 	
 	gettimeofday(&down_time , NULL);
 	d_time = ((double)down_time.tv_sec*1000000 + (double)down_time.tv_usec) / 1000000;
@@ -2694,7 +2693,7 @@ void msg_typ_labl_lst(char buffer[2048], unsigned char* ethhead, char* recvOnEth
  * 
  * 
  ************************************************************************/
-void msg_typ_ip_delt(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr) {
+void msg_typ_ip_delt(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr) {
 	printf("\nReceived MESSAGE_TYPE_PUBLISH_IP_DELETE on : %s ", recvOnEtherPort);
 	printf("\tETH_SIZE:%d\n", sizeof(ethhead)*strlen(ethhead));
 	gettimeofday(&down_time , NULL); // NS do we need the time 
@@ -2727,7 +2726,7 @@ void msg_typ_ip_delt(char buffer[2048], unsigned char* ethhead, char* recvOnEthe
  * 
  *      
 **************************************************************************************/
-void msg_typ_ip_add(char buffer[2048], unsigned char* ethhead, char* recvOnEtherPort, struct sockaddr_ll src_addr, int *n) {
+void msg_typ_ip_add(char buffer[2048], unsigned char* ethhead, char recvOnEtherPort[IFNAMSIZ], struct sockaddr_ll src_addr, int *n) {
 	printf("\n Received MESSAGE_TYPE_PUBLISH_IP_ADD on : %s \n", recvOnEtherPort);
 	//MPLRMsgVReceivedCount++;
 	//MPLROtherReceivedCount--;

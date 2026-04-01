@@ -20,8 +20,8 @@
 
 extern int enableLogScreen;
 
-void update(char inPort[20]);
-int find(char inTier[20], char inPort[20]);
+void update(char inPort[IFNAMSIZ]);
+int find(char inTier[20], char inPort[IFNAMSIZ]);
 boolean containsTierAddress(char testStr[20]);
 boolean setByTierPartial(char inTier[20], boolean setFWDFields);
 boolean setByTierOnly(char inTier[20], boolean setFWDFields);
@@ -35,19 +35,19 @@ extern void modify_LL(char *addr);
 
 struct nodeHL {             // stores neighbor table 
 	char tier[20];          // tier value
-	char port[20];    		//eth port on which neighbor
+	char port[IFNAMSIZ];    		//eth port on which neighbor
 	struct nodeHL *next;    // next node
 }*headHL;
 
 struct stagingNode {     			// keeps track of messages recieved on a port    
-	char port[20]; 	    			// received new msg on interface
+	char port[IFNAMSIZ]; 	    			// received new msg on interface
 	int countHello;					//count of new msg - three messages - active port 
 	double lastUpdate;      		// last updated time
 	struct stagingNode *next;      // next node
 }*stagingHead;
 
 struct stablePort{
-	char port[20];			//interface which is stable
+	char port[IFNAMSIZ];			//interface which is stable
 	double lastUpdate;      // last updated time
 	struct stablePort *next;
 }*headStable;
@@ -59,7 +59,7 @@ struct stablePort{
  * @param inTier (char[]) - tier value
  * @param inPort (char[]) - interface value
  ***********************************************************/
-void append(char inTier[20], char inPort[20]) {
+void append(char inTier[20], char inPort[IFNAMSIZ]) {
 	struct nodeHL *temp, *right;
 	temp = (struct nodeHL *) malloc(sizeof(struct nodeHL));
 
@@ -258,7 +258,7 @@ struct addr_list* prev = headaddr;
  * @param inTier (char[]) - tier value
  * @param inPort (char[]) - interface value
  **********************************************************/
-void add(char inTier[20], char inPort[20]) {
+void add(char inTier[20], char inPort[IFNAMSIZ]) {
 	struct nodeHL *temp;
 	struct portTag *temp2;
 	temp = (struct nodeHL *) malloc(sizeof(struct nodeHL));
@@ -309,7 +309,7 @@ void printNeighbourTable() {
 /**************************************************************************
  * introduced to track three messages at a port that has become active to declare it to be stable  
 *********************************************************************/
- int staging(char inPort[20]){
+ int staging(char inPort[IFNAMSIZ]){
 	int checkstableport = findStable(inPort);
 	int stable=0;
 	if(checkstableport == 1){
@@ -352,7 +352,7 @@ void printNeighbourTable() {
  * @param inPort (char[]) - interface value
  * @return isEntryNew
  *********************************************************************/
-int insert(char inTier[20], char inPort[20]) {
+int insert(char inTier[20], char inPort[IFNAMSIZ]) {
 	struct nodeHL *temp;
 	temp = headHL;
 	int isEntryNew = 0;
@@ -385,7 +385,7 @@ int insert(char inTier[20], char inPort[20]) {
  * @param inPort (char[]) - interface value
  * @return returnVal (int) - 0 for present otherwise 1
  ****************************************************************************/
-int find(char inTier[20], char inPort[20]) {
+int find(char inTier[20], char inPort[IFNAMSIZ]) {
 	int returnVal = 1;
 	struct nodeHL *fNode = headHL;
 	while (fNode != NULL) { // traverse the list
@@ -412,7 +412,7 @@ int find(char inTier[20], char inPort[20]) {
 /**************************************************************************************
  * findStaging 
 ***************************************************************************************/
-int findStaging(char inPort[20]) {
+int findStaging(char inPort[IFNAMSIZ]) {
 	int returnVal = 1;
 		struct stagingNode *fNode = stagingHead;
 	while (fNode != NULL) { // traverse the list
@@ -434,7 +434,7 @@ int findStaging(char inPort[20]) {
  * findStable
  *   
 **************************************************************************/
-int findStable(char inPort[20]) {
+int findStable(char inPort[IFNAMSIZ]) {
 	int returnVal = 1;
 		struct stablePort *fNode = headStable;
 	while (fNode != NULL) { 	// traverse the list
@@ -456,7 +456,7 @@ int findStable(char inPort[20]) {
  * 
  *     
 **************************************************************************/
-void deleteStaging(char inPort[20]) {
+void deleteStaging(char inPort[IFNAMSIZ]) {
 		struct stagingNode *fNode = stagingHead;
 		struct stagingNode *prev1 = stagingHead;
 	while (fNode != NULL) { 	// traverse the list
@@ -485,7 +485,7 @@ void deleteStaging(char inPort[20]) {
  * 
  *     
 *********************************************************************************/
-void deleteStable(char inPort[20]) {
+void deleteStable(char inPort[IFNAMSIZ]) {
 		struct stablePort *fNode = headStable;
 		struct stablePort *prev1= headStable;
 	while (fNode != NULL) { 	// traverse the list
@@ -517,7 +517,7 @@ void deleteStable(char inPort[20]) {
  * @param inTier (char[]) - tier value
  * @param inPort (char[]) - interface value
  ****************************************************************************/
-void update(char inPort[20]) {
+void update(char inPort[IFNAMSIZ]) {
 	struct stablePort *uNode = headStable;
 	while (uNode != NULL) { // traverse the list
 		//printf("Here to update time2\n");
@@ -539,7 +539,7 @@ void update(char inPort[20]) {
  * 
  *    
 *********************************************************************************/
-int updateStaging(char inPort[20]) {
+int updateStaging(char inPort[IFNAMSIZ]) {
 	struct stagingNode *fNode = stagingHead;
 	struct stagingNode *uNode = stagingHead;
 		int stable = 0;
@@ -710,7 +710,7 @@ int delete() {
 /*******************************************************************   
 
 ************************************************************************/
-int tagport(char inPort[20],int tagnum){
+int tagport(char inPort[IFNAMSIZ],int tagnum){
 	struct portTag*temp2;
 	temp2 = (struct portTag *) malloc(sizeof(struct portTag));
 	strcpy(temp2->port, inPort);
@@ -733,7 +733,7 @@ int tagport(char inPort[20],int tagnum){
  *    
 
 *******************************************************************************/
-int matchPort(char inPort[20]) {
+int matchPort(char inPort[IFNAMSIZ]) {
 	int returnVal = 0;
 	struct portTag *temp = port_tag;
 	while (temp != NULL) {
@@ -756,7 +756,7 @@ int matchPort(char inPort[20]) {
  * method to delete node Tag from portTag when node is deleted
  * @return void
  ********************************************************************************/
-void deleteTag(char inPort[20]) {
+void deleteTag(char inPort[IFNAMSIZ]) {
 		struct portTag *fNode = port_tag;
 		struct portTag *prev1= port_tag;
 	while (fNode != NULL) {

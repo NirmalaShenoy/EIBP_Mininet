@@ -57,7 +57,7 @@ int setControlIF() {
 					// printf("Splitted: %s \n", testForCtrlIF);
 					if (strlen(testForCtrlIF) == strlen(EMULAB_CTRL_IP)) {
 							if (strncmp(testForCtrlIF, EMULAB_CTRL_IP, strlen(EMULAB_CTRL_IP)) == 0) {
-							ctrlIFName= (char *) malloc(20);
+							ctrlIFName= (char *) malloc(IFNAMSIZ);
 							strcpy(ctrlIFName, ifa->ifa_name);
 							ctrlIFAddrIP= (char *) malloc(20);
 							strcpy(ctrlIFAddrIP, ip);

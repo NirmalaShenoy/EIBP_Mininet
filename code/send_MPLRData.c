@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
+#include <net/if.h> // for IFNAMSIZ
 /***************************************************
  * dataSend(char[],char[])
  * method to send Ethernet frame
@@ -10,7 +11,7 @@
  * @param inPayLoad (char[]) - payLoad to be sent
  * @return status (int) - method return value
  ************************************************/
-int dataSend(char etherPort[20], unsigned char ipPacket[], char destTier[20], char srcTier[20], int ipPacketSize ) {
+int dataSend(char etherPort[IFNAMSIZ], unsigned char ipPacket[], char destTier[20], char srcTier[20], int ipPacketSize ) {
 
 	int payLoad_Size = -1;
 	int frame_Size = -1;

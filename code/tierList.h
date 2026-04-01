@@ -31,7 +31,7 @@ struct nodeTL {
 //tag = 2 : to_child from parent port
 //tag = 3 : to_parent from child port
 struct portTag{
-	char port[20];
+	char port[IFNAMSIZ];
 	int tag;
 	struct portTag *next;
 }*port_tag;

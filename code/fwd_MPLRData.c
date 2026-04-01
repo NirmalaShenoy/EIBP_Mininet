@@ -1,9 +1,10 @@
 #include "sendAndFwd.h"
 #include <fcntl.h>
 #include <unistd.h>
+#include <net/if.h> // for IFNAMSIZ
 
 extern int enableLogScreen;
-int dataFwd(char etherPort[20], unsigned char MPLRPacket[], int MPLRPacketSize) {
+int dataFwd(char etherPort[IFNAMSIZ], unsigned char MPLRPacket[], int MPLRPacketSize) {
 	int payLoad_Size = -1;
 	int frame_Size = -1;
 	int sockfd;

@@ -129,7 +129,7 @@ if len(argv) == 2:
             + gateway_with_cidr
         )
     print()
-    sleep(20)
+    sleep(120)
 
     CLI(net)
 

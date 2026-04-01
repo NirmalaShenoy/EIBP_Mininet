@@ -19,7 +19,7 @@ int ctrlLabelSend(int messageType,char etherPort[], char inPayload[]) {
 	char ifName[IFNAMSIZ];
 	uint8_t header[HEADER_SIZE];
 	char temp_Payload[MAX_CTRL_PAYLD_SIZE];
-//    printf("\n ctrlSend : EtherPort = %s",etherPort);
+	// printf("\n ctrlSend : EtherPort = %s",etherPort);
 	//  Need to update
 	//	if (strlen(argv[2]) > 1000) {
 	//	memcpy(temp_Payload, argv[2], MAX_PAYLD_SIZE); NS ?? 

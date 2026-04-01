@@ -7,11 +7,11 @@ extern int enableLogScreen;
 /***********************************
  * mainSend(char[],char[])
  * method to send MSG TYPE V (Encapsulated IP Message)
- * @param etherPort (char*) - interface to send on
- * @param inPayLoad (uint8_t*) - payLoad to be sent
+ * @param etherPort (char[]) - interface to send on
+ * @param inPayLoad (char[]) - payLoad to be sent
  * @return status (int) - method return value
  ***************************************************************/
-int endNetworkSend(char *etherPort, uint8_t *inPayload, int payloadLen) {
+int endNetworkSend(char etherPort[], uint8_t *inPayload, int payloadLen) {
 	printf("\n\n********************%s**********************", __FUNCTION__);
 	printf("\nSending on: %s\n", etherPort);
 	int payLoad_Size = -1;

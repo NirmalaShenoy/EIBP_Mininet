@@ -7,7 +7,7 @@
 #define UDP_HEADER_LENGTH 8
 static int num_packets;
 /*decapsulate the encapsulated message*/
-int dataDecapsulation(char etherPort[20], unsigned char MPLRDecapsPacket[], int MPLRDecapsSize) {
+int dataDecapsulation(char etherPort[IFNAMSIZ], unsigned char MPLRDecapsPacket[], int MPLRDecapsSize) {
 	
 	printf("etherPort - %s",etherPort);
 	num_packets = 0;
@@ -104,7 +104,7 @@ int dataDecapsulation(char etherPort[20], unsigned char MPLRDecapsPacket[], int 
 }
 
 // this function is not being used. 
-int dataDecapsulationUDP(char etherPort[20], unsigned char MPLRDecapsPacket[], int MPLRDecapsSize){
+int dataDecapsulationUDP(char etherPort[IFNAMSIZ], unsigned char MPLRDecapsPacket[], int MPLRDecapsSize){
 
 	unsigned char ipHeader[ IP_HEADER_LENGTH ];
 	memcpy( ipHeader, MPLRDecapsPacket, IP_HEADER_LENGTH );
