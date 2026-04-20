@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
-"""Custom topology built based on the content of a GraphML file
+"""
+One additional argument is required to run this script:
+the path to a GraphML file.
 
-Two arguments are required, in the following order:
-1. the path the graphML file.
-2. The naming prefix of the hosts, if there are hosts. If there are no hosts, just simply add None.
-
-Adding a topology with hosts in it (ex: host prefix is h, for h1, h2, etc.):
-sudo mn --custom GraphmlTopo.py --topo=graphmltopo,"/home/pjw7904/MTP-Mininet/graphs/host_test.graphml",h
+Then, this script automatically configures the network emulated in Mininet
+and runs the appropriate protocol(s).
 """
 
-from mininet.topo import Topo
+# the following are required imports
+from mininet.topo import (
+    Topo,
+)  # this is the Topo class, which is inherited by GraphmlTopo
 import xml.dom.minidom  # To parse the GraphML file
-from sys import argv
-from mininet.net import Mininet
-from time import sleep
-from mininet.cli import CLI
-from subprocess import call
+from sys import argv  # get the cmdline arguments - argv[1] is the GraphML file
+from mininet.net import Mininet  # for Mininet to function
+from time import sleep  # to delay as needed for the network to stabilize
+from mininet.cli import CLI  # used for Mininet CLI to function
+from subprocess import call  # just used to terminate Mininet at the end
 
 
+# this is the inherited class from Topo to work with GraphML
 class GraphmlTopo(Topo):
     "Build a Mininet network with a GraphML file"
 
@@ -30,7 +32,6 @@ class GraphmlTopo(Topo):
         # Find all edges via the edge tag, add as Hosts and Links to Mininet network
         edges = graphmlFile.getElementsByTagName("edge")
         for edge in edges:
-
             # Add the nodes to the network
             sourceNode = self.defineNode(edge.getAttribute("source"), clientPrefix)
             targetNode = self.defineNode(edge.getAttribute("target"), clientPrefix)
@@ -51,24 +52,36 @@ class GraphmlTopo(Topo):
         return node
 
 
+# if the arguments are correct...
 if len(argv) == 2:
-    topo = GraphmlTopo()
-    net = Mininet(topo=topo)
-    net.start()
+    topo = GraphmlTopo()  # initialize the topology
+    net = Mininet(topo=topo)  # initialize Mininet
+    net.start()  # start Mininet
 
+    # disable IP forwarding on all devices (routers and hosts)
     for host in net.hosts:
         host.cmd(["sysctl", "-w", "net.ipv4.ip_forward=0"])
 
-    core_routers = [host for host in net.hosts if host.name[0] == "C"]
-    dist_routers = [host for host in net.hosts if host.name[0] == "D"]
-    access_routers = [host for host in net.hosts if host.name[0] == "A"]
-    hosts = [host for host in net.hosts if host.name[0] == "H"]
+    core_routers = [
+        host for host in net.hosts if host.name[0] == "C"
+    ]  # get the core routers
+    dist_routers = [
+        host for host in net.hosts if host.name[0] == "D"
+    ]  # get the distribution routers
+    access_routers = [
+        host for host in net.hosts if host.name[0] == "A"
+    ]  # get the access routers
+    hosts = [host for host in net.hosts if host.name[0] == "H"]  # get the hosts
 
+    # loop through the access routers and configure the gateway IP & CIDR
+    # on the interface directly connected to each host
     for access_router in access_routers:
         gateway_with_cidr = "192.168." + str(int(access_router.name[1:])) + ".254/24"
         interface = access_router.name + "-eth0"
         access_router.cmd(["ip", "addr", "add", gateway_with_cidr, "dev", interface])
 
+    # loop through and configure the IP & CIDR,
+    # and then configure the default gateway of each host
     for host in hosts:
         prefix = "192.168." + str(int(host.name[1:])) + "."
         ip = prefix + "1"
@@ -77,6 +90,8 @@ if len(argv) == 2:
         interface = host.name + "-eth0"
         host.cmd(["ip", "addr", "add", ip_with_cidr, "dev", interface])
         host.cmd(["ip", "route", "add", "default", "via", gateway, "dev", interface])
+
+        # this displays what was just done
         print(
             "Host: "
             + host.name
@@ -85,8 +100,11 @@ if len(argv) == 2:
             + " and the default gateway: "
             + gateway
         )
+    # this is extra space for proper formatting
     print()
 
+    # this loops through and configures the core routers
+    # in EIBP, they each have a label
     for core_router in core_routers:
         with open("../logs/" + core_router.name + ".txt", "w") as logfile:
             core_router.popen(
@@ -101,17 +119,25 @@ if len(argv) == 2:
             + core_router.name[1:]
         )
     print()
-    sleep(20)
+    sleep(
+        20
+    )  # delays like this are needed to ensure the network has had time to stabilize
 
+    # this loops through the distribution routers
+    # they have virtually no special configuration for any of them in EIBP
     for dist_router in dist_routers:
         with open("../logs/" + dist_router.name + ".txt", "w") as logfile:
             dist_router.popen(
                 ["./MNLR", "-T", "2", "-N", "1"], stdout=logfile, stderr=logfile
             )
+    # this announces that the distribution router assignment is complete
     print("Assignment for Distribution Routers done.")
     print()
     sleep(20)
 
+    # this loops through the final category of routers, the access routers,
+    # which require an IP & CIDR for the interface to function with IP,
+    # as EIBP is IP-agnostic
     for access_router in access_routers:
         gateway = "192.168." + str(int(access_router.name[1:])) + ".254"
         gateway_with_cidr = gateway + "/24"
@@ -131,12 +157,16 @@ if len(argv) == 2:
     print()
     sleep(120)
 
+    # begin the CLI
     CLI(net)
 
+    # when the CLI is exited, terminate EIBP...
     call(["killall", "MNLR"])
 
+    # then stop the network
     net.stop()
 
-
+# if the command is entered incorrectly...
 else:
+    # display the usage
     print("Usage: " + argv[0] + " topology.graphml")
